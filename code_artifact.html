@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사자성어 맞히기</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 큰 글씨 모드 dynamic root styling */
+        body.large-text-mode {
+            font-size: 1.15rem;
+        }
+        body.large-text-mode .text-lg { font-size: 1.35rem; }
+        body.large-text-mode .text-xl { font-size: 1.5rem; }
+        body.large-text-mode .text-2xl { font-size: 1.85rem; }
+        body.large-text-mode .text-3xl { font-size: 2.25rem; }
+        body.large-text-mode .text-4xl { font-size: 2.75rem; }
+        body.large-text-mode .text-5xl { font-size: 3.25rem; }
+        body.large-text-mode button {
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }
+
+        /* 남은 시간 타이머 애니메이션 */
+        .timer-bar {
+            transition: width 0.1s linear, background-color 0.3s ease;
+        }
+
+        /* 카드 및 버튼 입체 효과 */
+        .game-btn {
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+        }
+        .game-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        /* 모달 페이드인 애니메이션 */
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 transition-all duration-200">
+
+    <!-- 메인 앱 컨테이너 -->
+    <main id="app-container" class="w-full max-w-xl bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200/80 my-auto">
+        
+        <!-- 헤더 영역 (큰 글씨 모드 토글 포함) -->
+        <header class="bg-slate-800 text-white px-5 py-4 flex justify-between items-center border-b border-slate-700">
+            <h1 class="font-bold text-lg sm:text-xl flex items-center gap-2 cursor-pointer" onclick="goToStartScreen()">
+                <span>📖</span> 사자성어 맞히기
+            </h1>
+            <label class="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer bg-slate-700/70 hover:bg-slate-700 px-3 py-1.5 rounded-full transition">
+                <input type="checkbox" id="toggle-large-text" onchange="toggleLargeTextMode()" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 cursor-pointer">
+                <span>🔍 큰 글씨 모드</span>
+            </label>
+        </header>
+
+        <!-- 1. 시작 화면 -->
+        <section id="screen-start" class="p-6 sm:p-8 flex flex-col items-center text-center">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center text-4xl mb-4 shadow-inner">
+                🎓
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">사자성어 실력 테스트</h2>
+            <p class="text-slate-600 mb-6 text-sm sm:text-base leading-relaxed">
+                제시된 사자성어의 빈칸을 완성해 보세요!<br>
+                10문제를 풀고 나의 어휘력을 확인할 수 있습니다.
+            </p>
+
+            <!-- 난이도 선택 영역 -->
+            <div class="w-full bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 text-left">
+                <span class="block font-bold text-slate-700 mb-3 text-center sm:text-left">난이도를 선택하세요</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="difficulty" value="easy" checked class="peer hidden">
+                        <div class="py-3 px-2 text-center rounded-xl font-bold border-2 border-slate-200 bg-white text-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition">
+                            🌱 초급
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="difficulty" value="medium" class="peer hidden">
+                        <div class="py-3 px-2 text-center rounded-xl font-bold border-2 border-slate-200 bg-white text-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition">
+                            🌿 중급
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="difficulty" value="hard" class="peer hidden">
+                        <div class="py-3 px-2 text-center rounded-xl font-bold border-2 border-slate-200 bg-white text-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition">
+                            🌳 고급
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg sm:text-xl rounded-2xl game-btn transition duration-200 shadow-lg shadow-emerald-600/30">
+                🚀 게임 시작하기
+            </button>
+        </section>
+
+        <!-- 2. 문제 풀이 화면 -->
+        <section id="screen-quiz" class="p-6 sm:p-8 hidden">
+            <!-- 진행도 및 남은시간 상단바 -->
+            <div class="flex justify-between items-center mb-3 text-sm font-bold text-slate-600">
+                <span id="quiz-progress-text">문제 1 / 10</span>
+                <span id="quiz-score-text" class="text-emerald-600">현재 점수: 0점</span>
+            </div>
+
+            <!-- 남은 시간 프로그래스 바 -->
+            <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden mb-6 relative">
+                <div id="timer-bar" class="timer-bar h-full bg-emerald-500 w-full rounded-full"></div>
+            </div>
+            <div class="flex justify-between items-center text-xs text-slate-500 mb-6 font-semibold">
+                <span>⏱️ 제한시간</span>
+                <span id="timer-text" class="text-base text-slate-800 font-extrabold">20초</span>
+            </div>
+
+            <!-- 사자성어 문제 카드 -->
+            <div class="bg-gradient-to-b from-slate-800 to-slate-900 text-white p-6 sm:p-8 rounded-3xl text-center shadow-inner mb-6 relative overflow-hidden">
+                <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">빈칸에 들어갈 글자는?</div>
+                <div id="question-box" class="text-4xl sm:text-5xl font-black tracking-wider text-amber-300 py-4 font-mono">
+                    고 진 □ □
+                </div>
+            </div>
+
+            <!-- 4지선다 보기 버튼 그룹 -->
+            <div class="grid grid-cols-2 gap-3 sm:gap-4" id="options-container">
+                <!-- 자바스크립트로 보기 버튼 dynamic 생성 -->
+            </div>
+
+            <!-- PC 이용자용 키보드 안내 -->
+            <p class="text-center text-slate-400 text-xs mt-6 hidden sm:block">
+                💡 PC에서는 키보드 숫자키(1, 2, 3, 4)로 정답을 선택할 수 있습니다.
+            </p>
+        </section>
+
+        <!-- 3. 결과 화면 -->
+        <section id="screen-result" class="p-6 sm:p-8 hidden">
+            <div class="text-center mb-6">
+                <div id="result-badge" class="inline-block p-4 bg-amber-100 text-amber-600 rounded-full text-3xl mb-2">
+                    🏆
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">퀴즈 결과</h2>
+                <p id="result-message" class="text-slate-600 text-sm mt-1">훌륭한 실력입니다!</p>
+            </div>
+
+            <!-- 점수 현황 요약 박스 -->
+            <div class="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 text-center">
+                <div class="p-2">
+                    <span class="block text-xs text-slate-500 font-semibold mb-1">최종 점수</span>
+                    <span id="res-score" class="text-2xl sm:text-3xl font-black text-emerald-600">0</span>
+                    <span class="text-xs text-slate-400">/ 100</span>
+                </div>
+                <div class="p-2 border-x border-slate-200">
+                    <span class="block text-xs text-slate-500 font-semibold mb-1">정답 / 오답</span>
+                    <span id="res-counts" class="text-lg sm:text-xl font-bold text-slate-800">0 / 0</span>
+                </div>
+                <div class="p-2">
+                    <span class="block text-xs text-slate-500 font-semibold mb-1">정답률</span>
+                    <span id="res-accuracy" class="text-lg sm:text-xl font-bold text-slate-800">0%</span>
+                </div>
+            </div>
+
+            <!-- 오답 목록 영역 -->
+            <div class="mb-6">
+                <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-1.5 text-sm sm:text-base">
+                    <span>📌</span> 틀린 문제 목록 <span id="wrong-count-badge" class="text-xs bg-red-100 text-red-600 font-bold px-2 py-0.5 rounded-full">0</span>
+                </h3>
+                <div id="wrong-answers-list" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                    <!-- 자바스크립트로 오답 리스트 생성 -->
+                </div>
+            </div>
+
+            <!-- 하단 버튼 조작부 -->
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="btn-review" onclick="startReview()" class="flex-1 py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl game-btn transition">
+                    📝 틀린 문제 복습하기
+                </button>
+                <button onclick="goToStartScreen()" class="flex-1 py-3.5 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-xl game-btn transition">
+                    🔄 다시 도전하기
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 정답 / 오답 해설 모달 -->
+    <div id="modal-feedback" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl animate-fade-in border border-slate-100 flex flex-col">
+            <!-- 정답 여부 타이틀 -->
+            <div id="feedback-header" class="flex items-center gap-3 mb-4">
+                <div id="feedback-icon" class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-black">
+                    ⭕
+                </div>
+                <div>
+                    <h3 id="feedback-title" class="text-xl font-extrabold text-slate-900">정답입니다!</h3>
+                    <p id="feedback-subtitle" class="text-xs text-slate-500">지식이 1 상승했습니다.</p>
+                </div>
+            </div>
+
+            <!-- 사자성어 카드 해설 -->
+            <div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 mb-6 space-y-2">
+                <div class="flex items-baseline gap-2">
+                    <span id="modal-word-kr" class="text-2xl font-black text-slate-900">고진감래</span>
+                    <span id="modal-word-hj" class="text-base font-bold text-emerald-700">(苦盡甘來)</span>
+                </div>
+                <div class="border-t border-slate-200/60 pt-2">
+                    <span class="block text-xs font-bold text-slate-400 mb-0.5">뜻 풀이</span>
+                    <p id="modal-meaning" class="text-slate-700 text-sm leading-relaxed font-medium">
+                        고생 끝에 즐거움이 온다는 뜻.
+                    </p>
+                </div>
+                <div id="modal-example-box" class="bg-white p-3 rounded-xl border border-slate-200 text-xs text-slate-600 italic">
+                    💡 <span id="modal-example">"열심히 공부하더니 고진감래로 시험에 합격했다."</span>
+                </div>
+            </div>
+
+            <!-- 다음 버튼 -->
+            <button id="modal-next-btn" onclick="nextQuestion()" class="w-full py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold text-lg rounded-2xl game-btn transition">
+                다음 문제 ➔
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript 로직 -->
+    <script>
+        /* ==========================================================================
+           1. 검증된 사자성어 데이터베이스 (초급, 중급, 고급)
+           ========================================================================== */
+        const IDIOM_DATABASE = {
+            easy: [
+                { kr: "고진감래", hj: "苦盡甘來", mean: "고생 끝에 즐거움이 온다는 의미입니다.", ex: "열심히 노력한 결과 마침내 고진감래의 결실을 맺었다." },
+                { kr: "온고지신", hj: "溫故知新", mean: "옛것을 익히고 그것을 미루어서 새것을 안다는 의미입니다.", ex: "온고지신의 자세로 전통문화를 현대적으로 발전시키자." },
+                { kr: "일석이조", hj: "一石二鳥", mean: "한 개의 돌을 던져 두 마리의 새를 맞춘다는 뜻으로, 한 가지 일로 두 가지 이득을 얻음을 이릅니다.", ex: "건강도 챙기고 돈도 아끼니 그야말로 일석이조다." },
+                { kr: "유비무환", hj: "有備無患", mean: "미리 준비가 되어 있으면 뒷걱정이 없다는 의미입니다.", ex: "유비무환의 정신으로 재난에 미리 대비해야 한다." },
+                { kr: "동문서답", hj: "東問西答", mean: "물음과는 전혀 상관없는 딴소리로 대답함이라는 의미입니다.", ex: "질문의 요지를 파악하지 못해 동문서답을 하고 말았다." },
+                { kr: "과유불급", hj: "過猶不及", mean: "정도에 지나침은 미치지 못함과 같다는 의미입니다.", ex: "운동도 지나치면 건강을 해치니 과유불급이다." },
+                { kr: "일어탁수", hj: "一魚濁水", mean: "한 마리의 물고기가 물을 흐린다는 뜻으로, 한 사람의 악행이 사회 전체에 영향을 미침을 이릅니다.", ex: "그 사람의 행동은 일어탁수처럼 조직 전체의 분위기를 해쳤다." },
+                { kr: "심사숙고", hj: "深思熟考", mean: "깊이 생각하고 깊이 숙고함이라는 의미입니다.", ex: "중요한 결정을 내리기 전에 심사숙고하는 자세가 필요하다." },
+                { kr: "동고동락", hj: "同苦同樂", mean: "괴로움과 즐거움을 함께 함이라는 의미입니다.", ex: "힘든 시절을 함께 동고동락한 친구들이라 특별하다." },
+                { kr: "대기만성", hj: "大器晩成", mean: "큰 그릇은 늦게 완성된다는 뜻으로, 크게 될 사람은 늦게 이루어짐을 이릅니다.", ex: "지금 결과가 안 나와도 대기만성이니 포기하지 마라." },
+                { kr: "역지사지", hj: "易地思之", mean: "처지를 바꾸어 생각함이라는 의미입니다.", ex: "상대방의 입장에서 역지사지로 생각해 보면 이해할 수 있다." },
+                { kr: "작심삼일", hj: "作心三日", mean: "단단히 먹은 마음이 사흘을 가지 못한다는 의미입니다.", ex: "새해 계획이 작심삼일이 되지 않도록 꾸준히 노력하자." }
+            ],
+            medium: [
+                { kr: "감언이설", hj: "甘言利說", mean: "남의 비위를 맞추거나 이로운 조건으로 꾀는 말이라는 의미입니다.", ex: "달콤한 감언이설에 속아 넘어가 손해를 보았다." },
+                { kr: "동병상련", hj: "同病相憐", mean: "같은 병을 앓는 사람끼리 서로 가엾게 여긴다는 뜻으로, 처지가 비슷한 사람끼리 동정함이라는 의미입니다.", ex: "같은 처지의 동료를 보며 동병상련의 정을 느꼈다." },
+                { kr: "박학다식", hj: "博學多識", mean: "학식이 넓고 아는 것이 많음이라는 의미입니다.", ex: "그 선생님은 박학다식하여 어떤 질문에도 잘 대답해 주신다." },
+                { kr: "백척간두", hj: "百尺竿頭", mean: "백 척이나 되는 대나무 끝에 섰다는 뜻으로, 매우 위태로운 처지라는 의미입니다.", ex: "회사 운명이 백척간두의 위기에 놓여 있다." },
+                { kr: "청출어람", hj: "青出於藍", mean: "쪽에서 나온 물감이 쪽보다 더 푸르다는 뜻으로, 제자가 스승보다 뛰어남을 이릅니다.", ex: "스승을 뛰어넘는 뛰어난 실력으로 청출어람을 보여주었다." },
+                { kr: "주마간산", hj: "走馬看山", mean: "달리는 말 위에서 산을 구경한다는 뜻으로, 사물의 수박 겉핥기식 구경을 이릅니다.", ex: "시간이 부족해 박물관을 주마간산으로 둘러보았다." },
+                { kr: "타산지석", hj: "他山之石", mean: "다른 산의 돌도 옥을 가는 데 쓸 수 있다는 뜻으로, 남의 남의 산 실수나 흠도 자신을 다스리는 데 도움이 됨을 이릅니다.", ex: "타인의 실패를 타산지석으로 삼아 같은 실수를 반복하지 말자." },
+                { kr: "탁상공론", hj: "卓上空論", mean: "현실성이 없는 헛된 이론이나 논의라는 의미입니다.", ex: "현장의 목소리를 반영하지 않은 정책은 탁상공론에 불과하다." },
+                { kr: "결초보은", hj: "結草報恩", mean: "풀을 묶어서 은혜를 갚는다는 뜻으로, 죽어서도 은혜를 잊지 않고 갚음을 이릅니다.", ex: "베풀어 주신 은혜에 결초보은의 마음으로 보답하겠습니다." },
+                { kr: "부화뇌동", hj: "附和雷同", mean: "자신의 주관이 없이 남의 의견에 무작정 따라 옴이라는 의미입니다.", ex: "남들의 말에 부화뇌동하지 말고 소신을 지켜라." },
+                { kr: "아전인수", hj: "我田引水", mean: "자기 논에 물 대기라는 뜻으로, 자기에게만 유리하게 생각하고 행동함을 이릅니다.", ex: "모든 상황을 아전인수로 해석하는 태도는 좋지 않다." },
+                { kr: "상전벽해", hj: "桑田碧海", mean: "뽕나무 밭이 푸른 바다로 변한다는 뜻으로, 세상이 몰라보게 변함을 이릅니다.", ex: "시골 마을이 대도시로 변했으니 그야말로 상전벽해다." }
+            ],
+            hard: [
+                { kr: "각골난망", hj: "刻骨難忘", mean: "은혜를 뼈에刻 깊이 새겨 잊지 않음이라는 의미입니다.", ex: "도와주신 은혜는 각골난망하여 평생 잊지 않겠습니다." },
+                { kr: "구밀복검", hj: "口蜜腹劍", mean: "입으로는 달콤한 말을 하나 배 속에는 칼을 품고 있다는 뜻으로, 겉으로는 친한 척하나 속으로는 해칠 마음을 품음을 이릅니다.", ex: "겉으로는 웃지만 속엔 칼을 품은 구밀복검의 인물을 경계해라." },
+                { kr: "당랑거철", hj: "螳螂拒轍", mean: "사마귀가 수레바퀴를 막아선다는 뜻으로, 자신의 힘을 모르고 무모하게 상대함이라는 의미입니다.", ex: "거대한 상대에게 혼자 맞서는 것은 당랑거철에 불과하다." },
+                { kr: "와신상담", hj: "臥薪嘗膽", mean: "섶에 눕고 쓴 쓸개를 핥는다는 뜻으로, 원수를 갚거나 원대한 목적을 위해 고난을 참아냄을 이릅니다.", ex: "수년간의 와신상담 끝에 드디어 승리를 거두었다." },
+                { kr: "안빈낙도", hj: "安貧樂道", mean: "가난한 생활 속에서도 편안한 마음으로 도를 즐김이라는 의미입니다.", ex: "물질적 풍요보다 안빈낙도의 삶에서 진정한 행복을 찾았다." },
+                { kr: "반포지효", hj: "反哺之效", mean: "까마귀가 자라서 늙은 어미에게 먹이를 물어다 준다는 뜻으로, 자식이 어버이의 은혜에 효도로 보답함을 이릅니다.", ex: "부모님께 반포지효의 효도를 다하는 것이 자식의 도리이다." },
+                { kr: "맥수지탄", hj: "麥秀之歎", mean: "보리만 무성하게 자란 것을 보고 탄식한다는 뜻으로, 고국의 멸망을 탄식함을 이릅니다.", ex: "폐허가 된 옛 궁궐 터에서 맥수지탄의 슬픔을 느꼈다." },
+                { kr: "교각살우", hj: "矯角殺牛", mean: "소의 뿔을 바로잡으려다 소를 죽인다는 뜻으로, 작은 결점을 고치려다 전체를 망침을 이릅니다.", ex: "사소한 문제 수정하려다 전체 시스템을 고장 내면 교각살우다." },
+                { kr: "천학비재", hj: "淺學菲才", mean: "학식이 얕고 재주가 보잘것없다는 뜻으로, 자신을 겸손하게 이르는 말입니다.", ex: "천학비재한 저에게 이런 중책을 맡겨주셔서 감사드립니다." },
+                { kr: "가화만사성", hj: "家和萬事成", mean: "집안이 화목하면 모든 일이 잘 이루어짐이라는 의미입니다.", ex: "가화만사성이니 항상 가족의 행복을 최우선으로 삼자." },
+                { kr: "순망치한", hj: "唇亡齒寒", mean: "입술이 없으면 이가 시리다는 뜻으로, 서로 밀접하게 도와야 할 관계라는 의미입니다.", ex: "두 회사는 순망치한의 관계로 함께 협력해야 살아남는다." },
+                { kr: "읍참마속", hj: "泣斬馬謖", mean: "눈물을 머금고 마속의 목을 벤다는 뜻으로, 공정한 법 집행을 위해 사사로운 정을 버림을 이릅니다.", ex: "조직의 기강을 바로잡기 위해 읍참마속의 결단을 내렸다." }
+            ]
+        };
+
+        /* ==========================================================================
+           2. 게임 상태 관리 변수 (State Management)
+           ========================================================================== */
+        let gameState = {
+            difficulty: 'easy',
+            questions: [],
+            currentIndex: 0,
+            score: 0,
+            correctCount: 0,
+            wrongCount: 0,
+            wrongQuestions: [],
+            timerInterval: null,
+            timeLeft: 20,
+            isReviewMode: false,
+            isAnswered: false
+        };
+
+        /* ==========================================================================
+           3. UI 초기화 및 화면 전환 함수
+           ========================================================================== */
+        // 큰 글씨 모드 토글
+        function toggleLargeTextMode() {
+            const isChecked = document.getElementById('toggle-large-text').checked;
+            if (isChecked) {
+                document.body.classList.add('large-text-mode');
+            } else {
+                document.body.classList.remove('large-text-mode');
+            }
+        }
+
+        // 화면 전환 보조 함수
+        function showScreen(screenId) {
+            ['screen-start', 'screen-quiz', 'screen-result'].forEach(id => {
+                const el = document.getElementById(id);
+                if (id === screenId) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+            // 타이머 초기화 (안전장치)
+            clearInterval(gameState.timerInterval);
+        }
+
+        // 시작 화면으로 돌아가기
+        function goToStartScreen() {
+            clearInterval(gameState.timerInterval);
+            document.getElementById('modal-feedback').classList.add('hidden');
+            showScreen('screen-start');
+        }
+
+        /* ==========================================================================
+           4. 문제 생성 및 게임 시작 로직
+           ========================================================================== */
+        // 배열 셔플 함수 (Fisher-Yates)
+        function shuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // 퀴즈 10문제 무작위 생성 (유형 ① 앞2글자 제시, ② 뒤2글자 제시 믹스)
+        function generateQuiz(pool) {
+            const selectedIdioms = shuffle(pool).slice(0, 10);
+            
+            return selectedIdioms.map(idiom => {
+                // 문제 유형 0: 앞 두 글자 제시 (고진 □ □ -> 감래)
+                // 문제 유형 1: 뒤 두 글자 제시 (□ □ 지신 -> 온고)
+                const type = Math.floor(Math.random() * 2); 
+                const front = idiom.kr.substring(0, 2);
+                const back = idiom.kr.substring(2, 4);
+
+                let prompt = "";
+                let correctAnswer = "";
+
+                if (type === 0) {
+                    prompt = `${front} □ □`;
+                    correctAnswer = back;
+                } else {
+                    prompt = `□ □ ${back}`;
+                    correctAnswer = front;
+                }
+
+                // 오답 보기 3개 추출 (전체 데이터베이스 내에서 올바르지 않은 2글자 쌍)
+                const allIdioms = [...IDIOM_DATABASE.easy, ...IDIOM_DATABASE.medium, ...IDIOM_DATABASE.hard];
+                let distractorCandidates = [];
+
+                allIdioms.forEach(item => {
+                    const f = item.kr.substring(0, 2);
+                    const b = item.kr.substring(2, 4);
+                    if (f !== correctAnswer && f !== front && f !== back) distractorCandidates.push(f);
+                    if (b !== correctAnswer && b !== front && b !== back) distractorCandidates.push(b);
+                });
+
+                // 중복 제거 및 무작위 3개 추출
+                distractorCandidates = Array.from(new Set(distractorCandidates));
+                const wrongOptions = shuffle(distractorCandidates).slice(0, 3);
+
+                // 정답과 오답 합친 후 셔플
+                const options = shuffle([correctAnswer, ...wrongOptions]);
+
+                return {
+                    idiom: idiom,
+                    prompt: prompt,
+                    correctAnswer: correctAnswer,
+                    options: options,
+                    type: type
+                };
+            });
+        }
+
+        // 게임 시작
+        function startGame() {
+            const selectedDiff = document.querySelector('input[name="difficulty"]:checked').value;
+            const pool = IDIOM_DATABASE[selectedDiff] || IDIOM_DATABASE.easy;
+
+            gameState = {
+                difficulty: selectedDiff,
+                questions: generateQuiz(pool),
+                currentIndex: 0,
+                score: 0,
+                correctCount: 0,
+                wrongCount: 0,
+                wrongQuestions: [],
+                timerInterval: null,
+                timeLeft: 20,
+                isReviewMode: false,
+                isAnswered: false
+            };
+
+            showScreen('screen-quiz');
+            loadQuestion();
+        }
+
+        /* ==========================================================================
+           5. 문제 화면 표시 및 타이머 컨트롤
+           ========================================================================== */
+        function loadQuestion() {
+            gameState.isAnswered = false;
+            const q = gameState.questions[gameState.currentIndex];
+
+            // UI 텍스트 갱신
+            document.getElementById('quiz-progress-text').innerText = `문제 ${gameState.currentIndex + 1} / ${gameState.questions.length}`;
+            document.getElementById('quiz-score-text').innerText = `현재 점수: ${gameState.score}점`;
+            document.getElementById('question-box').innerText = q.prompt;
+
+            // 보기 버튼 생성
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full py-4 sm:py-5 bg-white hover:bg-emerald-50 hover:border-emerald-500 border-2 border-slate-200 text-slate-800 text-xl sm:text-2xl font-bold rounded-2xl game-btn transition flex items-center justify-center gap-2";
+                btn.innerHTML = `<span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-md border border-slate-200">${idx + 1}</span> ${opt}`;
+                btn.onclick = () => handleAnswer(opt);
+                optionsContainer.appendChild(btn);
+            });
+
+            // 타이머 시작 (20초)
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(gameState.timerInterval);
+            gameState.timeLeft = 20;
+            updateTimerUI();
+
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeLeft -= 0.1;
+                if (gameState.timeLeft <= 0) {
+                    gameState.timeLeft = 0;
+                    updateTimerUI();
+                    clearInterval(gameState.timerInterval);
+                    handleAnswer(null); // 시간 초과 처리
+                } else {
+                    updateTimerUI();
+                }
+            }, 100);
+        }
+
+        function updateTimerUI() {
+            const timerBar = document.getElementById('timer-bar');
+            const timerText = document.getElementById('timer-text');
+
+            const percentage = (gameState.timeLeft / 20) * 100;
+            timerBar.style.width = `${percentage}%`;
+
+            const wholeSec = Math.ceil(gameState.timeLeft);
+            timerText.innerText = `${wholeSec}초`;
+
+            // 시간이 얼마 안 남았을 때 색상 변경
+            if (wholeSec <= 5) {
+                timerBar.className = "timer-bar h-full bg-red-500 w-full rounded-full animate-pulse";
+                timerText.className = "text-base text-red-600 font-extrabold";
+            } else {
+                timerBar.className = "timer-bar h-full bg-emerald-500 w-full rounded-full";
+                timerText.className = "text-base text-slate-800 font-extrabold";
+            }
+        }
+
+        /* ==========================================================================
+           6. 정답 제출 및 해설 모달 로직
+           ========================================================================== */
+        function handleAnswer(selectedOpt) {
+            if (gameState.isAnswered) return; // 중복 제출 방지
+            gameState.isAnswered = true;
+            clearInterval(gameState.timerInterval);
+
+            const q = gameState.questions[gameState.currentIndex];
+            const isCorrect = (selectedOpt === q.correctAnswer);
+
+            if (isCorrect) {
+                gameState.score += 10;
+                gameState.correctCount += 1;
+                showFeedbackModal(true, q);
+            } else {
+                gameState.wrongCount += 1;
+                gameState.wrongQuestions.push(q);
+                showFeedbackModal(false, q, selectedOpt === null);
+            }
+        }
+
+        // 정답/오답 및 해설 모달 표시
+        function showFeedbackModal(isCorrect, questionObj, isTimeout = false) {
+            const modal = document.getElementById('modal-feedback');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const subtitle = document.getElementById('feedback-subtitle');
+            
+            const wordKr = document.getElementById('modal-word-kr');
+            const wordHj = document.getElementById('modal-word-hj');
+            const meaning = document.getElementById('modal-meaning');
+            const example = document.getElementById('modal-example');
+
+            if (isCorrect) {
+                icon.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-black bg-emerald-100 text-emerald-600";
+                icon.innerText = "⭕";
+                title.className = "text-xl font-extrabold text-emerald-600";
+                title.innerText = "정답입니다!";
+                subtitle.innerText = "+10점을 획득하셨습니다.";
+            } else {
+                icon.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-black bg-red-100 text-red-600";
+                icon.innerText = "❌";
+                title.className = "text-xl font-extrabold text-red-600";
+                title.innerText = isTimeout ? "시간이 초과되었습니다!" : "아쉽네요. 오답입니다!";
+                subtitle.innerText = `정답은 '${questionObj.correctAnswer}' 입니다.`;
+            }
+
+            // 사자성어 상세 내용 바인딩
+            wordKr.innerText = questionObj.idiom.kr;
+            wordHj.innerText = `(${questionObj.idiom.hj})`;
+            meaning.innerText = questionObj.idiom.mean;
+            example.innerText = `"${questionObj.idiom.ex}"`;
+
+            modal.classList.remove('hidden');
+        }
+
+        // 다음 문제로 이동
+        function nextQuestion() {
+            document.getElementById('modal-feedback').classList.add('hidden');
+            gameState.currentIndex += 1;
+
+            if (gameState.currentIndex < gameState.questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        /* ==========================================================================
+           7. 결과 화면 및 오답 복습 기능
+           ========================================================================== */
+        function showResults() {
+            showScreen('screen-result');
+
+            const total = gameState.questions.length;
+            const accuracy = Math.round((gameState.correctCount / total) * 100);
+
+            document.getElementById('res-score').innerText = gameState.score;
+            document.getElementById('res-counts').innerText = `${gameState.correctCount} / ${gameState.wrongCount}`;
+            document.getElementById('res-accuracy').innerText = `${accuracy}%`;
+
+            // 뱃지 및 메시지 설정
+            const badge = document.getElementById('result-badge');
+            const msg = document.getElementById('result-message');
+            if (gameState.score === 100) {
+                badge.innerText = "💯";
+                msg.innerText = "완벽합니다! 만점을 달성하셨습니다!";
+            } else if (gameState.score >= 70) {
+                badge.innerText = "🎉";
+                msg.innerText = "훌륭합니다! 훌륭한 사자성어 실력입니다.";
+            } else {
+                badge.innerText = "📘";
+                msg.innerText = "조금 더 연습하면 더 좋은 점수를 받을 수 있어요!";
+            }
+
+            // 오답 목록 리스트 렌더링
+            const wrongListEl = document.getElementById('wrong-answers-list');
+            const wrongBadge = document.getElementById('wrong-count-badge');
+            const btnReview = document.getElementById('btn-review');
+
+            wrongBadge.innerText = gameState.wrongCount;
+            wrongListEl.innerHTML = '';
+
+            if (gameState.wrongQuestions.length === 0) {
+                wrongListEl.innerHTML = `
+                    <div class="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <span class="text-2xl mb-1 block">👏</span>
+                        <p class="text-slate-600 font-bold text-sm">틀린 문제가 없습니다!</p>
+                        <p class="text-xs text-slate-400">모든 사자성어를 완벽하게 맞히셨습니다.</p>
+                    </div>
+                `;
+                btnReview.classList.add('hidden');
+            } else {
+                btnReview.classList.remove('hidden');
+                gameState.wrongQuestions.forEach((q, i) => {
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-50 p-4 rounded-xl border border-slate-200 text-left space-y-1";
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-900">${q.idiom.kr} <span class="text-xs text-emerald-700 font-normal">(${q.idiom.hj})</span></span>
+                            <span class="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-100 font-semibold">정답: ${q.correctAnswer}</span>
+                        </div>
+                        <p class="text-xs text-slate-600">${q.idiom.mean}</p>
+                    `;
+                    wrongListEl.appendChild(card);
+                });
+            }
+        }
+
+        // 틀린 문제만 모아서 오답 복습 모드 실행
+        function startReview() {
+            if (gameState.wrongQuestions.length === 0) return;
+
+            // 오답 문제들로 새로운 문제 모음 재구성
+            const reviewQuestions = gameState.wrongQuestions.map(q => {
+                // 보기만 다시 셔플하여 재사용
+                return {
+                    ...q,
+                    options: shuffle(q.options)
+                };
+            });
+
+            gameState.questions = reviewQuestions;
+            gameState.currentIndex = 0;
+            gameState.score = 0;
+            gameState.correctCount = 0;
+            gameState.wrongCount = 0;
+            gameState.wrongQuestions = [];
+            gameState.isReviewMode = true;
+
+            showScreen('screen-quiz');
+            loadQuestion();
+        }
+
+        /* ==========================================================================
+           8. PC 키보드 단축키 지원 (1, 2, 3, 4번 키 지원)
+           ========================================================================== */
+        window.addEventListener('keydown', (e) => {
+            const quizScreen = document.getElementById('screen-quiz');
+            const feedbackModal = document.getElementById('modal-feedback');
+
+            // 퀴즈 화면이 열려있고 모달이 안 떴을 때
+            if (!quizScreen.classList.contains('hidden') && feedbackModal.classList.contains('hidden')) {
+                const key = e.key;
+                if (['1', '2', '3', '4'].includes(key)) {
+                    const idx = parseInt(key) - 1;
+                    const buttons = document.querySelectorAll('#options-container button');
+                    if (buttons[idx]) {
+                        buttons[idx].click();
+                    }
+                }
+            } 
+            // 모달창이 열려있을 때 Space/Enter 누르면 다음 문제로 진행
+            else if (!feedbackModal.classList.contains('hidden')) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    nextQuestion();
+                }
+            }
+        });
+
+        // 페이지 이동 시 타이머 해제
+        window.onbeforeunload = function () {
+            clearInterval(gameState.timerInterval);
+        };
+    </script>
+</body>
+</html>
